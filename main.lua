@@ -23,17 +23,18 @@ function love.load()
 end
 
 function love.update(dt)
-    if timer > 0 then
-        timer = timer - dt
-    end
-    
-    if timer < 0 then
-        timer = 0
-    end
-
-    countdown = countdown + dt
-    if countdown >= 2 and gameState == RUNNING then
-        resetTargetPos()
+    if gameState == RUNNING then
+        if timer > 0 then
+            timer = timer - dt
+            countdown = countdown + dt
+        end
+        if timer < 0 then
+            timer = 0
+            gameState = STOPPED
+        end
+        if countdown >= 2 and gameState == RUNNING then
+            resetTargetPos()
+        end
     end
 end
 
@@ -48,7 +49,7 @@ end
 
 function love.mousepressed(x, y, button)
     -- primary mouse button clicked
-    if button == 1 and gameState == RUNNING then
+    if button == 1 and gameState == RUNNING and timer > 0 then
         dist = distanceBetween(target.x, target.y, x, y)
         if dist <= target.radius then
             score = score + 1
@@ -56,6 +57,11 @@ function love.mousepressed(x, y, button)
             -- reset target x, y
             resetTargetPos()
         end
+    elseif button == 1 and gameState == STOPPED then
+        timer = 10
+        countdown = 0
+        score = 0
+        gameState = RUNNING
     end
 end
 
@@ -71,7 +77,9 @@ function love.draw()
     -- draw background
     love.graphics.draw(sprites.sky, 0, 0)
     
-    love.graphics.draw(sprites.target, target.x - target.radius, target.y - target.radius)
+    if gameState == RUNNING then
+        love.graphics.draw(sprites.target, target.x - target.radius, target.y - target.radius)
+    end
 
     -- draw score text
     love.graphics.setColor(1, 1, 1)
@@ -83,6 +91,13 @@ function love.draw()
     love.graphics.setFont(gameFont)
     love.graphics.print(string.format('Timer: %.0f', timer), 0, gameFont:getHeight() + 10)
     
+    -- draw welcome text
+    if gameState == STOPPED then
+        love.graphics.setColor(1, 1, 1)
+        love.graphics.setFont(love.graphics.newFont(50))
+        love.graphics.print('Tab anywhere to start!', love.graphics.getWidth() / 2 - 300, love.graphics.getHeight() / 2 - 25)
+    end
+
     love.graphics.draw(sprites.crosshairs, love.mouse.getX() - sprites.crosshairs:getWidth() / 2, love.mouse.getY() - sprites.crosshairs:getHeight() / 2)
 end
 
